@@ -557,13 +557,18 @@ function App() {
   };
 
   const handleLogout = async () => {
+    // If Supabase can't be reached, its calls retry for up to ~25 seconds.
+    // Cap how long logout waits on the server so the button always responds quickly.
+    const withTimeout = (promise, ms) =>
+      Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(null), ms))]);
+
     if (profile?.full_name) {
-      await logActivity(profile.full_name, 'user_logout', {});
+      await withTimeout(logActivity(profile.full_name, 'user_logout', {}), 2000);
     }
 
-    const { error } = await supabase.auth.signOut();
+    const result = await withTimeout(supabase.auth.signOut(), 3000);
 
-    if (error) {
+    if (!result || result.error) {
       // The server couldn't be reached, so log out on this device anyway by
       // removing the saved login. Otherwise the user would be stuck signed in.
       Object.keys(localStorage)
