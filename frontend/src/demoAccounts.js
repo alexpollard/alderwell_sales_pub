@@ -3,6 +3,13 @@
 // file to create these accounts and set their passwords, so keep it plain JS.
 export const DEMO_PASSWORD = 'AlderwellDemo1!';
 
+// Shown on the login page when Supabase can't be reached (usually because the
+// free project has been paused), so visitors can ask for it to be switched back on.
+export const OWNER_CONTACT = {
+  label: 'LinkedIn',
+  url: 'https://www.linkedin.com/in/alex-pollard-9a6a99353',
+};
+
 export const DEMO_ACCOUNTS = [
   {
     key: 'manager',

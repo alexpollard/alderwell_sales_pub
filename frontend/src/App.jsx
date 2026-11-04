@@ -13,7 +13,34 @@ import {
 } from './components';
 import { supabase } from './utils/supabase';
 import { logActivity } from './utils/logActivity';
-import { DEMO_ACCOUNTS, DEMO_PASSWORD } from './demoAccounts';
+import { DEMO_ACCOUNTS, DEMO_PASSWORD, OWNER_CONTACT } from './demoAccounts';
+
+// True if the error means Supabase couldn't be reached at all (e.g. project paused),
+// as opposed to a normal error like a wrong password.
+function isConnectionError(error) {
+  return Boolean(error) && (
+    error.status === 0
+    || error.name === 'AuthRetryableFetchError'
+    || /failed to fetch|fetch failed|network/i.test(error.message || '')
+  );
+}
+
+// Quick check that Supabase is up. Paused projects stop resolving or return an error.
+async function isSupabaseReachable() {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 6000);
+  try {
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/auth/v1/health`, {
+      headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY },
+      signal: controller.signal,
+    });
+    return response.status < 500;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 import './App.css';
 
 function ProtectedRoute({ session, profileLoading, mustChangePassword, children }) {
@@ -202,6 +229,18 @@ function App() {
   const [authLoading, setAuthLoading] = useState(false);
   const [authMessage, setAuthMessage] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' });
+  const [backendDown, setBackendDown] = useState(false);
+
+  // Check once on load whether Supabase is reachable, so the login page can explain a paused demo.
+  useEffect(() => {
+    let cancelled = false;
+    isSupabaseReachable().then((reachable) => {
+      if (!cancelled && !reachable) setBackendDown(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
 
   const [newPassword, setNewPassword] = useState('');
@@ -418,6 +457,12 @@ function App() {
       email: email.trim(),
       password,
     });
+
+    if (isConnectionError(error)) {
+      setBackendDown(true);
+      setAuthLoading(false);
+      return;
+    }
 
     if (error) {
       const parsedError = mapAuthError(error.message);
@@ -653,7 +698,26 @@ function App() {
             Accounts are created by admins. Enter your work email and password to continue.
           </p>
 
-          {authMessage ? (
+          {backendDown ? (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 space-y-1">
+              <p className="font-medium">The demo is offline right now</p>
+              <p>
+                This is most likely because its Supabase database has been paused (free projects pause
+                when they&apos;re not in use). If you&apos;d like to try the demo, please{' '}
+                <a
+                  href={OWNER_CONTACT.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium underline"
+                >
+                  contact me on {OWNER_CONTACT.label}
+                </a>{' '}
+                and I&apos;ll switch it back on.
+              </p>
+            </div>
+          ) : null}
+
+          {authMessage && !backendDown ? (
             <div
               className={`rounded-lg border px-3 py-2 text-sm ${
                 authMessage.type === 'error'
