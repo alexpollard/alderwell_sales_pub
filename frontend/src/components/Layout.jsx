@@ -187,7 +187,7 @@ export default function Layout({ children, activeNav, onNavChange, userEmail, us
               >
                 <MenuItems className="absolute right-0 mt-2 w-56 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-gray-200 z-50">
                   <div className="px-4 py-3 border-b border-gray-200">
-                    <p className="font-semibold text-gray-900">{resolvedUserName}</p>
+                    <p className="font-semibold text-gray-900 truncate" title={resolvedUserName}>{resolvedUserName}</p>
                     <p className="text-sm text-brand-deep">{resolvedUserRole}</p>
                   </div>
 

@@ -564,8 +564,12 @@ function App() {
     const { error } = await supabase.auth.signOut();
 
     if (error) {
-      setAuthMessage({ type: 'error', text: error.message });
-      return;
+      // The server couldn't be reached, so log out on this device anyway by
+      // removing the saved login. Otherwise the user would be stuck signed in.
+      Object.keys(localStorage)
+        .filter((key) => key.startsWith('sb-') && key.endsWith('-auth-token'))
+        .forEach((key) => localStorage.removeItem(key));
+      setSession(null);
     }
 
     navigate('/login', { replace: true });
