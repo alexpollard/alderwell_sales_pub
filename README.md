@@ -95,3 +95,13 @@ From `frontend/` folder:
 - Only admins can create staff accounts (no public sign-ups)
 - To delete files from storage, use Supabase console
 - The database structure for this project is included in `backend/sql/schema.sql`
+## Public demo
+
+The live demo runs at https://alexpollard.github.io/alderwell_sales_pub/. The login page has one-click demo logins for the Manager, Marketing and Sales Rep roles (accounts are listed in `frontend/src/demoAccounts.js`).
+
+- **Hosting:** `.github/workflows/deploy-pages.yml` builds the frontend and publishes it to GitHub Pages on every push to `main`.
+- **Resetting:** `.github/workflows/demo-reset.yml` runs `backend/scripts/demo/reset-demo.mjs` every 6 hours. It restores the saved data, removes anything visitors added, reloads the sample data from `backend/scripts/demo/sample-data.mjs`, and resets the demo passwords. Running this often also stops Supabase pausing the free project.
+- **Keeping your own changes:** the reset undoes every change, including yours. After changing data you want to keep, run `node backend/scripts/demo/save-snapshot.mjs` to save the new state. The snapshot is kept in a private Supabase storage bucket, not in this repo.
+- **Backups:** `node backend/scripts/backup.mjs` saves all tables and files to `backups/` (git-ignored).
+
+These scripts need `SUPABASE_SERVICE_ROLE_KEY` in `backend/.env` (git-ignored). The GitHub workflows need the repository secrets `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY`.

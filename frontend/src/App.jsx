@@ -13,6 +13,7 @@ import {
 } from './components';
 import { supabase } from './utils/supabase';
 import { logActivity } from './utils/logActivity';
+import { DEMO_ACCOUNTS, DEMO_PASSWORD } from './demoAccounts';
 import './App.css';
 
 function ProtectedRoute({ session, profileLoading, mustChangePassword, children }) {
@@ -735,6 +736,30 @@ function App() {
               </button>
             </form>
           </Transition>
+
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-2">
+            <p className="text-sm font-medium text-gray-800">Try the demo</p>
+            <p className="text-xs text-gray-600">
+              Pick a role to fill in its login. Each role sees different parts of the system.
+              Demo data resets every few hours, so feel free to make changes.
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {DEMO_ACCOUNTS.map((account) => (
+                <button
+                  key={account.key}
+                  type="button"
+                  onClick={() => {
+                    setEmail(account.email);
+                    setPassword(DEMO_PASSWORD);
+                    setFieldErrors({ email: '', password: '' });
+                  }}
+                  className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-700 hover:border-brand-deep hover:text-brand-deep transition-colors"
+                >
+                  {account.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
