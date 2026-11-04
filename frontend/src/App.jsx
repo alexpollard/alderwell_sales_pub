@@ -344,20 +344,28 @@ function App() {
     }
   }, [session, mustChangePassword, profileLoading, location.pathname, navigate]);
 
-  useEffect(() => {
-    if (!profile) return;
-    setProfileForm({
-      full_name: profile.full_name || '',
-      username: profile.username || '',
-    });
-  }, [profile]);
-
-  useEffect(() => {
-    const navFromPath = getNavIdFromPath(location.pathname);
-    if (navFromPath && navFromPath !== activeNav) {
-      setActiveNav(navFromPath);
+  // Refill the profile form whenever a new profile loads.
+  // Done during render rather than in an effect to avoid an extra re-render.
+  const [formSourceProfile, setFormSourceProfile] = useState(profile);
+  if (profile !== formSourceProfile) {
+    setFormSourceProfile(profile);
+    if (profile) {
+      setProfileForm({
+        full_name: profile.full_name || '',
+        username: profile.username || '',
+      });
     }
-  }, [location.pathname, activeNav]);
+  }
+
+  // Keep the highlighted nav item in step with the URL, falling back to the
+  // first item the user's role can see if the current one isn't allowed.
+  let desiredNav = getNavIdFromPath(location.pathname) || activeNav;
+  if (session && !profileLoading && profile && !allowedNav.includes(desiredNav)) {
+    desiredNav = allowedNav[0] || 'home';
+  }
+  if (desiredNav !== activeNav) {
+    setActiveNav(desiredNav);
+  }
 
   useEffect(() => {
     if (!session?.user?.id || profileLoading || !profile) {
@@ -370,15 +378,6 @@ function App() {
     }
   }, [session?.user?.id, profileLoading, profile, allowedNav, location.pathname, navigate]);
 
-  useEffect(() => {
-    if (!session || profileLoading || !profile) {
-      return;
-    }
-
-    if (!allowedNav.includes(activeNav)) {
-      setActiveNav(allowedNav[0] || 'home');
-    }
-  }, [session, profileLoading, profile, allowedNav, activeNav]);
 
 
   const validateLoginForm = () => {
