@@ -27,7 +27,6 @@ const ASSIGNABLE_ROLES = {
   manager:              ['admin', 'manager', 'marketing_team_member', 'sales_representative', 'compliance_officer'],
   compliance_officer:   ['compliance_officer'],
   marketing_team_member: ['marketing_team_member'],
-  marketing_team_member: [],
   sales_representative: [],
 };
 
