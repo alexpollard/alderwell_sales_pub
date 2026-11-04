@@ -183,7 +183,7 @@ function getNavIdFromPath(pathname) {
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeNav, setActiveNav] = useState(() => getNavIdFromPath(window.location.pathname) || 'home');
+  const [activeNav, setActiveNav] = useState(() => getNavIdFromPath(location.pathname) || 'home');
   const [session, setSession] = useState(null);
   const [sessionLoading, setSessionLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);

@@ -1,0 +1,42 @@
+# Free Supabase projects pause after 7 days without activity.
+# This runs a tiny database query every 3 days so the demo stays online.
+name: Keep Supabase awake
+
+on:
+  schedule:
+    - cron: "0 9 */3 * *"
+  workflow_dispatch: # lets you run it by hand from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query the database
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            "$SUPABASE_URL/rest/v1/profiles?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+          echo "Supabase responded with HTTP $status"
+          [ "$status" = "200" ] || exit 1
+
+      # GitHub switches off scheduled jobs in repos with no commits for 60 days.
+      # If the repo has been quiet for 50+ days, push an empty commit to keep this job running.
+      - uses: actions/checkout@v4
+      - name: Keep the schedule enabled
+        run: |
+          last=$(git log -1 --format=%ct)
+          age_days=$(( ( $(date +%s) - last ) / 86400 ))
+          echo "Last commit was $age_days days ago"
+          if [ "$age_days" -ge 50 ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit --allow-empty -m "Keep scheduled workflow active"
+            git push
+          fi
