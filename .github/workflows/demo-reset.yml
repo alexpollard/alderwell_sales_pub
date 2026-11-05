@@ -25,7 +25,24 @@ jobs:
         with:
           node-version: 20
 
+      # A paused Supabase project stops resolving (or answers 540). That's expected,
+      # so skip the reset quietly instead of failing and sending an email every run.
+      - name: Check Supabase is running
+        id: check
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "$SUPABASE_URL/auth/v1/health") || curl_exit=$?
+          if [ "${curl_exit:-0}" = "6" ] || [ "$code" = "540" ]; then
+            echo "::notice::Supabase project is paused, so the demo reset was skipped."
+            echo "paused=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Supabase responded (HTTP $code)"
+            echo "paused=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Reset demo
+        if: steps.check.outputs.paused != 'true'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
